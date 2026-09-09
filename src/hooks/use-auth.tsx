@@ -203,11 +203,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const error = result.error;
+        const errorRecord = error as unknown as Record<string, unknown>;
+        const errorMessage =
+          typeof errorRecord.message === "string" && errorRecord.message
+            ? errorRecord.message
+            : error instanceof Error
+              ? error.message
+              : JSON.stringify(error) || "Unknown profile fetch error";
         console.error("[AuthProvider] fetchProfile error:", {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
+          name: error instanceof Error ? error.name : undefined,
+          message: errorMessage,
+          details: errorRecord.details,
+          hint: errorRecord.hint,
+          code: errorRecord.code,
+          status: errorRecord.status,
+          cause: error instanceof Error ? error.cause : undefined,
+          raw: error,
         });
         // One hiccup here used to lock the session read-only for good:
         // the profile stayed null, so every `useCan` gate answered
@@ -218,7 +229,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           continue;
         }
         lastFetchedUserIdRef.current = null;
-        setStatusDetail(error.message);
+        setStatusDetail(errorMessage);
         return;
       }
 

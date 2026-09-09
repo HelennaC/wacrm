@@ -1,8 +1,11 @@
 -- ============================================================
 -- NOTIFICATIONS
 -- ============================================================
+
+-- Use PostgreSQL's built-in UUID generator so this migration does not
+-- depend on the optional uuid-ossp extension being available remotely.
 CREATE TABLE IF NOT EXISTS notifications (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
   -- Recipient — the agent this notification is for.
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
