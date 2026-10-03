@@ -24,8 +24,8 @@ import { useTranslations } from 'next-intl'
 // Single category, single colour — the data is "average minutes
 // per weekday". Tremor expects categories as the second tuple in
 // the row object, so we shape the buckets into
-// `{ day: 'Mon', 'Avg minutes': 4.2 }` rows below.
-const CATEGORY = 'Avg minutes'
+// `{ day: 'Seg', 'Minutos médios': 4.2 }` rows below.
+const CATEGORY = 'Minutos médios'
 
 export function ResponseTimeChart({
   data,
