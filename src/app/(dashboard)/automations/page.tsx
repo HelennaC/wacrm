@@ -40,7 +40,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { AUTOMATION_TEMPLATES, type TemplateSlug } from "@/lib/automations/templates"
+import type { TemplateSlug } from "@/lib/automations/templates"
 import { triggerMeta, formatRelative } from "@/lib/automations/trigger-meta"
 import { cn } from "@/lib/utils"
 
@@ -77,13 +77,13 @@ export default function AutomationsPage() {
       if (fetchErr) throw fetchErr
       setAutomations((data ?? []) as Automation[])
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load automations")
+      setError(err instanceof Error ? err.message : t("loadError"))
     }
   }
 
   useEffect(() => {
     load()
-  }, [])
+  }, [t])
 
   async function toggleActive(a: Automation, next: boolean) {
     // Optimistic flip so the switch feels instant.
@@ -183,7 +183,6 @@ export default function AutomationsPage() {
           <h2 className="mb-3 text-sm font-semibold text-muted-foreground">{t("templatesTitle")}</h2>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             {TEMPLATE_ORDER.map((slug) => {
-              const t = AUTOMATION_TEMPLATES[slug]
               const Icon = TEMPLATE_ICON[slug]
               return (
                 <button
@@ -194,8 +193,8 @@ export default function AutomationsPage() {
                   <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary/15">
                     <Icon className="h-5 w-5" />
                   </div>
-                  <div className="text-sm font-semibold text-foreground">{t.name}</div>
-                  <p className="mt-1 text-xs text-muted-foreground">{t.description}</p>
+                  <div className="text-sm font-semibold text-foreground">{t(`templates.${slug}.name`)}</div>
+                  <p className="mt-1 text-xs text-muted-foreground">{t(`templates.${slug}.description`)}</p>
                 </button>
               )
             })}
@@ -278,7 +277,23 @@ function AutomationCard({
   onDelete: () => void
   t: ReturnType<typeof useTranslations>
 }) {
+  const tBuilder = useTranslations("Automations.builder")
+  const tRelative = useTranslations("Automations.relative")
   const meta = triggerMeta(automation.trigger_type)
+  const triggerTypes = [
+    "new_message_received",
+    "first_inbound_message",
+    "keyword_match",
+    "interactive_reply",
+    "new_contact_created",
+    "conversation_assigned",
+    "tag_added",
+    "time_based",
+  ]
+  const triggerLabel = triggerTypes.includes(automation.trigger_type)
+    ? tBuilder(`triggers.${automation.trigger_type}.label`)
+    : meta.label
+  const relativeTime = formatLocalizedRelative(automation.last_executed_at, tRelative)
   return (
     <li className="rounded-xl border border-border bg-card transition-colors hover:border-border">
       <div className="flex items-center gap-4 p-4">
@@ -299,7 +314,7 @@ function AutomationCard({
               {automation.name}
             </span>
             {automation.is_active && (
-              <span className="relative flex h-2 w-2" aria-label="active">
+              <span className="relative flex h-2 w-2" aria-label={t("activeIndicator")}>
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
               </span>
@@ -315,7 +330,7 @@ function AutomationCard({
                 meta.pillClass,
               )}
             >
-              {meta.label}
+              {triggerLabel}
             </span>
             <span className="tabular-nums">
               {automation.execution_count === 1
@@ -323,7 +338,7 @@ function AutomationCard({
                 : t("runsPlural", { count: automation.execution_count })}
             </span>
             <span aria-hidden>·</span>
-            <span>{t("lastRun", { time: formatRelative(automation.last_executed_at) })}</span>
+            <span>{t("lastRun", { time: relativeTime })}</span>
           </div>
         </button>
 
@@ -336,7 +351,7 @@ function AutomationCard({
 
           <DropdownMenu>
             <DropdownMenuTrigger
-              aria-label="Open menu"
+              aria-label={t("openMenu")}
               className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-[popup-open]:bg-muted"
             >
               <MoreVertical className="h-4 w-4" />
@@ -365,4 +380,19 @@ function AutomationCard({
       </div>
     </li>
   )
+}
+
+function formatLocalizedRelative(
+  iso: string | null | undefined,
+  t: ReturnType<typeof useTranslations>,
+) {
+  const value = formatRelative(iso)
+  if (value === "never") return t("never")
+  if (value === "just now") return t("justNow")
+  const match = value.match(/^(\d+)([mhd]) ago$/)
+  if (match) {
+    const key = { m: "minutesAgo", h: "hoursAgo", d: "daysAgo" }[match[2]]
+    if (key) return t(key, { n: Number(match[1]) })
+  }
+  return value
 }

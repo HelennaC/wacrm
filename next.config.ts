@@ -85,12 +85,13 @@ const nextConfig: NextConfig = {
    * has no effect on a production build.
    */
   allowedDevOrigins: [
-    "192.168.1.54",
+    "192.168.1.19",
     "*.ngrok-free.app",
     "*.ngrok.app",
     "*.ngrok.io",
     "*.trycloudflare.com",
     "*.loca.lt",
+    "glandular-snowdrift-bargraph.ngrok-free.dev",
     ...(process.env.ALLOWED_DEV_ORIGINS
       ? process.env.ALLOWED_DEV_ORIGINS.split(",")
           .map((origin) => origin.trim())
